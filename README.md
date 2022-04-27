@@ -16,8 +16,7 @@ steps:
 7. Visualize the lane boundaries and additional information on each video frame. 
 
 ## Camera calibration
-The required code for the camera calibration can be found in [``camera_calibration.py``]
-[Calibration]. There is also a nice [OpenCV tutorial][CalTut] on this topic.
+The required code for the camera calibration can be found in [``camera_calibration.py``][Calibration]. There is also a nice [OpenCV tutorial][CalTut] on this topic.
 
 Chessboard sample images were captured from different angles with the embedded camera and 
 are provided in the [``camera_cal``][Chessboard] folder. A 9x6 pattern is visible on most of 
@@ -46,8 +45,8 @@ object_corners[:, :2] = np.mgrid[0: cols, 0: rows].T.reshape(-1, 2)
 #        [8., 5., 0.]])
 ```
 
-The corresponding 2D image points are detected by using the [``cv2.findChessboardCorners``]
-[findChessboard] function after converting the chessbord image to grayscale.
+The corresponding 2D image points are detected by using the 
+[``cv2.findChessboardCorners``][findChessboard] function after converting the chessbord image to grayscale.
 
 ```python
 object_corner_list = []  # corner 3-d coordinates in the world space
@@ -79,8 +78,7 @@ ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
 pickle.dump({"mtx": mtx, "dist": dist}, open("calibration_results.p", "wb"))
 ```
 
-From now on, images taken with this camera can be undistorted using [``cv2.undistort``]
-[undistort] with the camera matrix ``mtx`` and the distortion coefficients ``dist``.
+From now on, images taken with this camera can be undistorted using [``cv2.undistort``][undistort] with the camera matrix ``mtx`` and the distortion coefficients ``dist``.
 
 ```python
 # Undistort one of the calibration images
@@ -117,8 +115,7 @@ chosen to perform this task:
 - The [``sobel_feature``][sobel_feature] to provide additional edge information on both lane 
   lines
 
-The complete feature code including all helper functions can be found in [``features.py``]
-[features].
+The complete feature code including all helper functions can be found in [``features.py``][features].
 
 ### The white feature
 The white feature uses the concept of contrast limited adaptive histogram equalization 
@@ -439,8 +436,8 @@ def fit_lines_by_recent_lines(warped_feature_binary,
 ```
 
 The [``Line``][Line] class is used to gather the required information for each lane line. 
-It is updated by the active pixels determined by [``fit_lines_by_windows``]
-[fit_lines_by_windows] or [``fit_lines_by_recent_lines``] [fit_lines_by_recent_lines] at 
+It is updated by the active pixels determined by [``fit_lines_by_windows``][fit_lines_by_windows] 
+or [``fit_lines_by_recent_lines``][fit_lines_by_recent_lines] at 
 each new incoming video frame. Amongst others, the following steps are performed:
 
 - Sanity check of new polynomial fit (coefficient deviations too high?)
@@ -609,8 +606,7 @@ class Line:
 
 ## Visualization
 The complete processing pipeline is performed on each incoming video frame by passing it to 
-the [``process``][process_func] function in [``advanced_lane_finding.py``]
-[advanced_lane_finding].
+the [``process``][process_func] function in [``advanced_lane_finding.py``][advanced_lane_finding].
 
 ```python
 def process(frame):
@@ -666,7 +662,7 @@ def process(frame):
     return processed_frame
 ```
 
-The processed ``project_video.mp4`` and ``challenge_video.mp4`` can be found in the 
+The processed [``project_video.mp4``][projvid] and [``challenge_video.mp4``][chalvid] can be found in the 
 [``output_videos``][output_videos] folder.
 
 #### Processed project video
@@ -725,6 +721,8 @@ Other critical situations are certainly also:
 [update_offset]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py#L115
 [update_radius]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py#L139
 [output_videos]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/tree/master/output_videos
+[projvid]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/tree/master/output_videos/project_video.mp4
+[chalvid]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/tree/master/output_videos/challenge_video.mp4
 
 [image1]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/camera_calibration_example.png "Undistortion Example"
 [image2]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/undistort_example.png "Undistortion Example"

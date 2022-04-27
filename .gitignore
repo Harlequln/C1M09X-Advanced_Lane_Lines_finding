@@ -1,0 +1,9 @@
+**/.vscode
+**/.idea
+
+__pycache__
+**/.ipynb_checkpoints
+
+output_videos/work/
+test_images
+test_images_extended

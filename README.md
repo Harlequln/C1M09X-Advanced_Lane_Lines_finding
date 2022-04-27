@@ -1,30 +1,33 @@
-# Advanced Lane Finding
-Approach on the Udacity Advanced Lane Finding project of the Self-Driving Car Engineer Nanodegree.
+This project is part of Udacity's [Self-Driving-Car Nanodegree][Course]. The project
+resources and build instructions can be found [here][Project].
 
-## Goals
-The main goal of this project is the development of a software pipeline to detect the lane boundaries in 
-the provided videos. The pipeline can be subdividided into the following steps:
+## Lane lines detection using computer vision
+The main goal of this project is the development of a software pipeline to detect the lane 
+boundaries in the provided videos. The pipeline can be subdividided into the following 
+steps:
 
-1. Determination of the camera calibration matrix and the distortion coefficients.
-2. Undistortion of the current video frame.
-3. Creation of a binary feature mask for the lane lines detection.
-4. Transformation  of the binary image into "birds-eye" perspective.
-5. Detection and fitting of the left and right lane lines to a second order polynomial.
-6. Determination of the average radius of curvature and the vehicle offset relative to the lane center.
-7. Visual display of the lane boundaries and additional information on the current frame. 
+1. One-time determination of the camera calibration matrix and its distortion coefficients.
+2. Use it to correct the distortion of each video frame.
+3. Create a binary feature mask to detect the lane lines.
+4. Transforme the binary image into birds-eye perspective.
+5. Detect and fit the left and right lane lines to second order polynomials.
+6. Determine the average radius of curvature and the vehicle offset with respect to the 
+   lane center.
+7. Visualize the lane boundaries and additional information on each video frame. 
 
-## 1. Determination of the camera calibration matrix and the distortion coefficients
+## Camera calibration
+The required code for the camera calibration can be found in [``camera_calibration.py``]
+[Calibration]. There is also a nice [OpenCV tutorial][CalTut] on this topic.
 
-Chessboard sample images to calibrate the camera are provided in the ``camera_cal`` folder. 
-A 9x6 pattern is visible on most of these images. Two sets of points need to be compared 
-for each image:
+Chessboard sample images were captured from different angles with the embedded camera and 
+are provided in the [``camera_cal``][Chessboard] folder. A 9x6 pattern is visible on most of 
+them. Two sets of points need to be compared to determine the camera calibration matrix:
 
-- the 2D chessboard corner image points (X, Y) and
-- the corresponding 3D real world chessboard corner object points (X, Y, Z) 
+- the chessboard corner *object points* in the 3D world (X, Y, Z), and
+- the corresponding 2D chessboard corner *image points* (X, Y)
 
-To make things easier the object points are assumed to lie on the XY-plane with the 
-Z-coordinate being zero. The same object points are used for the comparison with all
-chessboard images.
+To make things easier the 3D object points are assumed to lie on the XY-plane with the 
+Z-coordinate being zero.
 
 ```python
 # Creation of the array of evenly spaced 9x6 object points (x, y, z)
@@ -43,8 +46,8 @@ object_corners[:, :2] = np.mgrid[0: cols, 0: rows].T.reshape(-1, 2)
 #        [8., 5., 0.]])
 ```
 
-The corresponding 2D image points are detected by using the ``cv2.findChessboardCorners`` function 
-after converting the chessbord image to grayscale.
+The corresponding 2D image points are detected by using the [``cv2.findChessboardCorners``]
+[findChessboard] function after converting the chessbord image to grayscale.
 
 ```python
 object_corner_list = []  # corner 3-d coordinates in the world space
@@ -63,8 +66,9 @@ for file in Path("camera_cal/").rglob("*.jpg"):
         image_corner_list.append(image_corners)
 ```
 
-The camera calibration can now be perfomed using ``cv2.calibrateCamera`` with the obtained 
-image and object corner points.
+The camera calibration can now be perfomed using [``cv2.calibrateCamera``][calibrateCamera] 
+with the obtained image and object points. The same object points will be used for the 
+comparison with the detected image points on all chessboard images.
 
 ```python
 # Camera calibration
@@ -75,8 +79,8 @@ ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
 pickle.dump({"mtx": mtx, "dist": dist}, open("calibration_results.p", "wb"))
 ```
 
-From now on, images taken with this camera can be undistorted by using ``cv2.undistort`` with the 
-camera matrix ``mtx`` and the distortion coefficients ``dist``.
+From now on, images taken with this camera can be undistorted using [``cv2.undistort``]
+[undistort] with the camera matrix ``mtx`` and the distortion coefficients ``dist``.
 
 ```python
 # Undistort one of the calibration images
@@ -87,10 +91,7 @@ plot_undistort_example(img, undist_img, save="./output_images/camera_calibration
 ```
 ![alt text][image1]
 
-The complete calibration code can be found in ``camera_calibration.py``
-
-
-## 2. Undistortion of the current video frame
+## Undistortion of current video frame
 Each new frame of the video needs to be undistorted before undergoing the further processing. 
 This can be done exactly as in the camera calibration example above
 
@@ -104,21 +105,26 @@ plot_undistort_example(img, undist_img, save="./output_images/undistort_example"
 ![alt text][image2]
 
 
-## 3. Creation of a binary feature mask for the lane lines detection
+## Binary feature mask for lane detection
 This is one of the major steps of the project. A binary feature mask needs to be created 
-for the subsequent lane line detection in each undistorted video frame. 
-Three features were chosen to perform this task:
+for the subsequent lane line detection in each undistorted video frame. Three features were
+chosen to perform this task:
 
-- The ``white_feature`` whose major purpose is to detect the white lane lines
-- The ``yellow_feature`` whose major purpose is to detect the yellow lane lines
-- The ``sobel_feature`` to provide additional edge information on both lane lines
+- The [``white_feature``][white_feature] whose major purpose is to detect the white lane 
+  lines
+- The [``yellow_feature``][yellow_feature] whose major purpose is to detect the yellow lane
+  lines
+- The [``sobel_feature``][sobel_feature] to provide additional edge information on both lane 
+  lines
 
-The complete feature code including all helper functions can be found in ``features.py``.
+The complete feature code including all helper functions can be found in [``features.py``]
+[features].
 
-### 3.1. The ``white_feature``
-The white feature uses the concept of contrast limited adaptive histogram equalization ([CLAHE][link1]). 
-After performing the histogram equalization on the rgb frame with the helper function ``rgb2clahe`` 
-the resulting clahe image is thresholded to obtain the white feature mask.
+### The white feature
+The white feature uses the concept of contrast limited adaptive histogram equalization 
+([CLAHE][CLAHE]). After performing the histogram equalization on the rgb frame with the 
+helper function [``rgb2clahe``][rgb2clahe] the resulting image is thresholded to obtain 
+the white feature mask.
 
 ```python
 def white_feature(rgb_image, thresh_min=210):
@@ -166,7 +172,7 @@ The lower threshold ``thresh_min=210`` was chosen to be the default after some t
 
 ![alt text][image3]
 
-### 3.2. The ``yellow_feature``
+### The yellow feature
 The yellow feature uses color thresholding in the HSV color space to detect yellow color in the given rgb frame. 
 
 ```python
@@ -193,10 +199,10 @@ The threshold boundaries of each channel were tuned to keep only the yellow colo
 ![alt text][image5]
 ![alt text][image6]
 
-### 3.3. The ``sobel_feature``
-The sobel feature creates a binary mask by determining and thresholding the sobel magnitude 
-on the saturation and lightness channels of the HLS color space. Subsequently an morphological 
-closing operation is performed on the binary mask.
+### The sobel feature
+The sobel feature creates a binary mask by determining and thresholding the sobel 
+magnitude on the saturation and lightness channels of the HLS color space. Subsequently 
+an morphological closing operation is performed on the binary mask.
 
 ```python
 def sobel_feature(rgb_image, thresh_min=20, thresh_max=255, ksize=9, iterations=5):
@@ -273,7 +279,7 @@ on the white and yellow lane lines.
 ![alt text][image7]
 ![alt text][image8]
 
-### 3.4. Feature composition
+### Feature composition
 The final feature mask is created by combining all three subfeatures. It only keeps 
 pixels active if at least two of the three subfeatures are active.
 
@@ -299,10 +305,11 @@ def feature_mask(rgb_image):
 ```
 ![alt text][image9]
 
-## 4. Transformation of the frame into "birds-eye" perspective
-To perform the perspective transformation, four points are required for the mapping of the source 
-to the destination locations. In this approach, these points are defined as ratios of the image size .
-The source points additionally serve as the defintion of the region of interest.  
+## Transformation into birds-eye perspective
+To perform the perspective transformation, four points are required for the mapping of 
+the source locations to the destination locations. In this approach, the points are defined 
+as ratios of image size. The source points additionally serve for the defintion of the 
+region of interest in front of the vehicle.  
 
 ```python
 # Region of interest, used as perspective transform source
@@ -320,9 +327,10 @@ ROI_DST = {"x1": 0.0, "y1": 1.0,  # left lower corner
            "x4": 0.0, "y4": 0.0}  # left upper corner
 ```
 
-The ``warp`` function in ``process.py`` performs the perspective transformation on the given undistorted image. 
-It returns the transformed image and additionally the transformation matrix and its inverse 
-for the back transformation performed in a later step. 
+The [``warp``][warp] function in [``process.py``][process] performs the perspective 
+transformation on the given undistorted image. It returns the transformed image and 
+additionally the transformation matrix and its inverse for the back transformation 
+performed in a later step. 
 
 ```python
 def warp(img, roi_src, roi_dst):
@@ -363,7 +371,7 @@ The following image is just for the visualisation of the warping process.
 
 ![alt text][image10]
 
-## 5. Detection and fitting of the left and right lane lines to a second order polynomial
+## Lane lines detection
 The lane line detection part of the main pipeline can be described by the following steps:
 
 1. Undistortion of the current rgb frame
@@ -373,7 +381,9 @@ The lane line detection part of the main pipeline can be described by the follow
     4.1. by a sliding window approach (if previously undetected or in lost status) or   
     4.2. by using the information of recently detected lane lines   
 
-Both functions ``fit_lines_by_windows`` and ``fit_lines_by_recent_lines`` can be found in ``process.py``.
+Both functions [``fit_lines_by_windows``][fit_lines_by_windows] and 
+[``fit_lines_by_recent_lines``][fit_lines_by_recent_lines] can be found in 
+[``process.py``][process].
 
 ```python
 def fit_lines_by_windows(warped_feature_binary,
@@ -428,16 +438,17 @@ def fit_lines_by_recent_lines(warped_feature_binary,
     """
 ```
 
-The ``Line`` class is used to gather and update the necessary information for each lane line. 
-Each lane line is updated by the active pixels determined by ``fit_lines_by_windows`` or 
-``fit_lines_by_recent_lines`` at each new frame. This update amongst others performs the follwing steps:  
+The [``Line``][Line] class is used to gather the required information for each lane line. 
+It is updated by the active pixels determined by [``fit_lines_by_windows``]
+[fit_lines_by_windows] or [``fit_lines_by_recent_lines``] [fit_lines_by_recent_lines] at 
+each new incoming video frame. Amongst others, the following steps are performed:
 
 - Sanity check of new polynomial fit (coefficient deviations too high?)
 - Depending on the sanity check, setting to lost or detected status
 - Update the current radius of curvature
 - Update the current offset of the line from the vehicle location
 
-The complete ``Line`` class code can be found in ``process.py``. 
+The complete [``Line``][Line] class code can be found in [``process.py``][process]. 
 
 ```python
 class Line:
@@ -525,9 +536,10 @@ class Line:
 
 ![alt text][image11]
 
-## 6. Determination of the average radius of curvature and the vehicle offset relative to the lane center
+## Radius of curvature and vehicle offset
 Both values are computed by taking the average of the values of each individual lane line. 
-This is a step in the main processing function ``process`` in ``advanced_lane_finding.py``. 
+This is a step in the main processing function [``process``][process_func] in 
+[``advanced_lane_finding.py``][advanced_lane_finding]. 
 
 ```python
 # Compute the vehicle offset and the average curvature radius 
@@ -536,11 +548,12 @@ avg_curv_rad = 0.5 * (left_line.radius_of_curvature + right_line.radius_of_curva
 ```
 
 The actual computation of the individual lane line values are performed by the methods 
-``Line.update_offset_from_vehicle`` and ``Line.update_radius_of_curvature_m``. 
-It is assumed that the vehicle location is at the bottom center of the image.
-The vehicle's offset to the lane center is computed by taking the average horizontal distance 
-of both lane line polynomials to the vehicle location. The formula for the radius of curvature 
-can be found [here][link2].
+[``Line.update_offset_from_vehicle``][update_offset] and 
+[``Line.update_radius_of_curvature_m``][update_radius]. 
+It is assumed that the vehicle location is at the bottom center of the image. The vehicle's
+offset to the lane center is computed by taking the average horizontal distance of both lane
+line polynomials to the vehicle location. The formula for the radius of curvature can be 
+found [here][link2].
  
 
 ```python
@@ -594,9 +607,10 @@ class Line:
         self.radius_of_curvature = curv
 ```
 
-## 7. Visual display of the lane boundaries and additional information on the current frame
-The complete processing pipeline is performed on each frame by passing it to the ``process`` function 
-in ``advanced_lane_finding.py``.
+## Visualization
+The complete processing pipeline is performed on each incoming video frame by passing it to 
+the [``process``][process_func] function in [``advanced_lane_finding.py``]
+[advanced_lane_finding].
 
 ```python
 def process(frame):
@@ -652,7 +666,8 @@ def process(frame):
     return processed_frame
 ```
 
-The processed ``project_video.mp4`` and ``challenge_video.mp4`` can be found in the ``output_videos`` folder.
+The processed ``project_video.mp4`` and ``challenge_video.mp4`` can be found in the 
+[``output_videos``][output_videos] folder.
 
 #### Processed project video
 ![][image13]
@@ -687,22 +702,44 @@ Other critical situations are certainly also:
 - Concealed lane lines
 - Overtaking cars crossing the own lane
 
-[image1]: ./output_images/camera_calibration_example.png "Undistortion Example"
-[image2]: ./output_images/undistort_example.png "Undistortion Example"
-[image3]: ./output_images/white_feature_tuning.png "White feature tuning"
-[image4]: ./output_images/yellow_feature_h_tuning.png "Yellow feature hue tuning"
-[image5]: ./output_images/yellow_feature_s_tuning.png "Yellow feature saturation tuning"
-[image6]: ./output_images/yellow_feature_v_tuning.png "Yellow feature value tuning"
-[image7]: ./output_images/sobel_feature_thresh_min_tuning.png "Sobel feature thresh_min tuning"
-[image8]: ./output_images/sobel_feature_iterations_tuning.png "Sobel feature iterations tuning"
-[image9]: ./output_images/feature_composition.png "Feature composition"
-[image10]: ./output_images/perspective_transform.png "Perspective transformation"
-[image11]: ./output_images/lane_detection_pipeline.png "Lane line detection pipeline"
-[image12]: ./output_images/test2_processed.jpg "Example pipeline output"
-[image13]: ./output_videos/project_video.gif "Project video"
-[image14]: ./output_videos/challenge_video.gif "Challenge video"
+[Course]: https://www.udacity.com/course/self-driving-car-engineer-nanodegree--nd013
+[Project]: https://github.com/udacity/CarND-Advanced-Lane-Lines
+[Chessboard]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/tree/master/camera_cal
+[Calibration]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/calibration1_undistorted.jpg
+[CalTut]: https://docs.opencv.org/5.x/dc/dbb/tutorial_py_calibration.html
+[findChessboard]: https://docs.opencv.org/5.x/d4/d93/group__calib.html#ga93efa9b0aa890de240ca32b11253dd4a
+[calibrateCamera]: https://docs.opencv.org/5.x/d4/d93/group__calib.html#gae4d3c8c61e181b222921991fc6a583ca
+[undistort]: https://docs.opencv.org/5.x/da/d35/group____3d.html#ga69f2545a8b62a6b0fc2ee060dc30559d
+[Features]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/features.py
+[white_feature]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/features.py#L112
+[yellow_feature]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/features.py#L131
+[sobel_feature]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/features.py#L179
+[rgb2clahe]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/features.py#L90
+[warp]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py#L178
+[process]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py
+[fit_lines_by_windows]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py#L270
+[fit_lines_by_recent_lines]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py#L417
+[Line]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py#L9
+[process_func]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/advanced_lane_finding.py#L18
+[advanced_lane_finding]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/advanced_lane_finding.py
+[update_offset]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py#L115
+[update_radius]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/blob/master/process.py#L139
+[output_videos]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/tree/master/output_videos
 
-[Link1]: https://docs.opencv.org/master/d5/daf/tutorial_py_histogram_equalization.html
-"https://docs.opencv.org/master/d5/daf/tutorial_py_histogram_equalization.html"
+[image1]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/camera_calibration_example.png "Undistortion Example"
+[image2]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/undistort_example.png "Undistortion Example"
+[image3]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/white_feature_tuning.png "White feature tuning"
+[image4]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/yellow_feature_h_tuning.png "Yellow feature hue tuning"
+[image5]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/yellow_feature_s_tuning.png "Yellow feature saturation tuning"
+[image6]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/yellow_feature_v_tuning.png "Yellow feature value tuning"
+[image7]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/sobel_feature_thresh_min_tuning.png "Sobel feature thresh_min tuning"
+[image8]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/sobel_feature_iterations_tuning.png "Sobel feature iterations tuning"
+[image9]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/feature_composition.png "Feature composition"
+[image10]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/perspective_transform.png "Perspective transformation"
+[image11]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/lane_detection_pipeline.png "Lane line detection pipeline"
+[image12]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_images/test2_processed.jpg "Example pipeline output"
+[image13]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_videos/project_video_640.gif "Processed project video"
+[image14]: https://github.com/pabaq/CarND-Advanced-Lane-Finding/raw/master/output_videos/challenge_video_640.gif "Processed challenge video"
+
+[CLAHE]: https://docs.opencv.org/5.x/d5/daf/tutorial_py_histogram_equalization.html
 [Link2]: https://www.intmath.com/applications-differentiation/8-radius-curvature.php
-"https://www.intmath.com/applications-differentiation/8-radius-curvature.php"

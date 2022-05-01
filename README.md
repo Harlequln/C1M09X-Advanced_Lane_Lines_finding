@@ -9,25 +9,25 @@ steps:
 1. One-time determination of the camera calibration matrix and its distortion coefficients.
 2. Use it to correct the distortion of each video frame.
 3. Create a binary feature mask to detect the lane lines.
-4. Transform the binary image into birds-eye perspective.
-5. Detect and fit the left and right lane lines to second order polynomials.
-6. Determine the average radius of curvature and the vehicle offset with respect to the 
+4. Transform the binary image into bird's-eye perspective.
+5. Detecting and fitting the left and right lane lines to second order polynomials.
+6. Determination of average radius of curvature and vehicle offset with respect to  
    lane center.
-7. Visualize the lane boundaries and additional information on each video frame. 
+7. Visualization of lane boundaries and additional information on each video frame. 
 
 ## Camera calibration
 The required code for the camera calibration can be found in [``camera_calibration.py``][Calibration]. 
 There is also a nice [OpenCV tutorial][CalTut] on this topic.
 
-Chessboard sample images were captured from different angles with the embedded camera and 
-are provided in the [``camera_cal``][Chessboard] folder. A 9x6 pattern is visible on most of 
-them. Two sets of points need to be compared to determine the camera calibration matrix:
+Chessboard sample images were taken from different angles with the embedded camera and 
+can be found in the [``camera_cal``][Chessboard] folder. On most of them A 9x6 pattern can 
+be seen. To determine the camera calibration matrix, two sets of points must be compared:
 
-- the chessboard corner *object points* in the 3D world (X, Y, Z), and
+- the *object points* of the chessboard corners in the 3D world (X, Y, Z), and
 - the corresponding 2D chessboard corner *image points* (X, Y)
 
-To make things easier the 3D object points are assumed to lie on the XY-plane with the 
-Z-coordinate being zero.
+For simplicity, it is assumed that the 3D object points lie on the XY-plane and the 
+Z-coordinate is zero.
 
 ```python
 # Creation of the array of evenly spaced 9x6 object points (x, y, z)
@@ -46,8 +46,9 @@ object_corners[:, :2] = np.mgrid[0: cols, 0: rows].T.reshape(-1, 2)
 #        [8., 5., 0.]])
 ```
 
-The corresponding 2D image points are detected by using the 
-[``cv2.findChessboardCorners``][findChessboard] function after converting the chessbord image to grayscale.
+The corresponding 2D image points are determined by using the 
+[``cv2.findChessboardCorners``][findChessboard] function after the chessboard image has 
+been converted to grayscale.
 
 ```python
 object_corner_list = []  # corner 3-d coordinates in the world space
@@ -66,8 +67,8 @@ for file in Path("camera_cal/").rglob("*.jpg"):
         image_corner_list.append(image_corners)
 ```
 
-The camera calibration can now be perfomed using [``cv2.calibrateCamera``][calibrateCamera] 
-with the obtained image and object points. The same object points will be used for the 
+The camera calibration can now be perfomed with [``cv2.calibrateCamera``][calibrateCamera] 
+using the obtained image and object points. The same object points are used for the 
 comparison with the detected image points on all chessboard images.
 
 ```python
@@ -79,7 +80,9 @@ ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
 pickle.dump({"mtx": mtx, "dist": dist}, open("calibration_results.p", "wb"))
 ```
 
-From now on, images taken with this camera can be undistorted using [``cv2.undistort``][undistort] with the camera matrix ``mtx`` and the distortion coefficients ``dist``.
+From now on, images taken with this camera can be undistorted using 
+[``cv2.undistort``][undistort] with the camera matrix ``mtx`` and the distortion 
+coefficients ``dist``.
 
 ```python
 # Undistort one of the calibration images
@@ -91,7 +94,7 @@ plot_undistort_example(img, undist_img, save="./output_images/camera_calibration
 ![alt text][image1]
 
 ## Undistortion of current video frame
-Each new frame of the video needs to be undistorted before undergoing the further processing. 
+Each new video frame must be undistorted before it can be further processed. 
 This can be done exactly as in the camera calibration example above
 
 ```python
@@ -107,21 +110,21 @@ plot_undistort_example(img, undist_img, save="./output_images/undistort_example"
 ## Binary feature mask for lane detection
 This is one of the major steps of the project. A binary feature mask needs to be created 
 for the subsequent lane line detection in each undistorted video frame. Three features were
-chosen to perform this task:
+chosen to accomplish this task:
 
-- The [``white_feature``][white_feature] whose major purpose is to detect the white lane 
+- The [``white_feature``][white_feature], whose major purpose is to detect the white lane 
   lines
-- The [``yellow_feature``][yellow_feature] whose major purpose is to detect the yellow lane
+- The [``yellow_feature``][yellow_feature], whose major purpose is to detect the yellow lane
   lines
-- The [``sobel_feature``][sobel_feature] to provide additional edge information on both lane 
-  lines
+- The [``sobel_feature``][sobel_feature] which provides additional edge information about 
+  both lane lines
 
 The complete feature code including all helper functions can be found in [``features.py``][features].
 
 ### The white feature
 The white feature uses the concept of contrast limited adaptive histogram equalization 
-([CLAHE][CLAHE]). After performing the histogram equalization on the rgb frame with the 
-helper function [``rgb2clahe``][rgb2clahe] the resulting image is thresholded to obtain 
+([CLAHE][CLAHE]). After performing the histogram equalization for the RGB frame with the 
+[``rgb2clahe``][rgb2clahe] helper function, the resulting image is thresholded to obtain 
 the white feature mask.
 
 ```python
@@ -166,12 +169,13 @@ def rgb2clahe(rgb_img, clip_limit=2.0, tile_grid_size=(8, 8)):
     return gray_clahe
 ```
 
-The lower threshold ``thresh_min=210`` was chosen to be the default after some tuning iterations. 
+The lower threshold ``thresh_min=210`` was chosen as default after some tuning iterations. 
 
 ![alt text][image3]
 
 ### The yellow feature
-The yellow feature uses color thresholding in the HSV color space to detect yellow color in the given rgb frame. 
+The yellow feature uses color thresholding in the HSV color space to detect yellow color 
+in the given rgb frame. 
 
 ```python
 def yellow_feature(rgb_image, lbound=(17, 20, 140), ubound=(32, 255, 255)):
@@ -192,15 +196,15 @@ def yellow_feature(rgb_image, lbound=(17, 20, 140), ubound=(32, 255, 255)):
     return ylw_mask
 ```
 
-The threshold boundaries of each channel were tuned to keep only the yellow color.
+The thresholds of each channel were tuned to preserve only the yellow color.
 ![alt text][image4]
 ![alt text][image5]
 ![alt text][image6]
 
 ### The sobel feature
 The sobel feature creates a binary mask by determining and thresholding the sobel 
-magnitude on the saturation and lightness channels of the HLS color space. Subsequently 
-an morphological closing operation is performed on the binary mask.
+magnitude on the saturation and lightness channels of the HLS color space. A morphological 
+closure operation is then performed on the binary mask.
 
 ```python
 def sobel_feature(rgb_image, thresh_min=20, thresh_max=255, ksize=9, iterations=5):
@@ -271,8 +275,8 @@ def rgb2hls(rgb_img, channel=None):
     return hls if channel is None else hls[:, :, channel]
 ```
 
-The lightness and saturation channels are chosen since they synergize well and both "activate" 
-on the white and yellow lane lines.
+The lightness and saturation channels were chosen because they work well together 
+and are both "activated" on the white and yellow lane lines.
 
 ![alt text][image7]
 ![alt text][image8]
@@ -327,8 +331,8 @@ ROI_DST = {"x1": 0.0, "y1": 1.0,  # left lower corner
 
 The [``warp``][warp] function in [``process.py``][process] performs the perspective 
 transformation on the given undistorted image. It returns the transformed image and 
-additionally the transformation matrix and its inverse for the back transformation 
-performed in a later step. 
+additionally the transformation matrix and its inverse for the back transformation, 
+which is performed in a later step. 
 
 ```python
 def warp(img, roi_src, roi_dst):
@@ -364,20 +368,21 @@ def warp(img, roi_src, roi_dst):
 
     return warped_img, trsf_mtx, trsf_mtx_inv
 ```
-In the main pipeline the binary feature mask is transformed into birds-eye view. 
-The following image is just for the visualisation of the warping process.
+In the main pipeline, the binary feature mask is transformed into bird's-eye view. 
+The following image is only for illustration of the warping process.
 
 ![alt text][image10]
 
 ## Lane lines detection
-The lane line detection part of the main pipeline can be described by the following steps:
+The part of the main pipeline dealing with lane detection can be described by the 
+following steps:
 
-1. Undistortion of the current rgb frame
+1. Undistortion of the current RGB frame
 2. Determination of the binary feature mask on the undistorted image
 3. Warping of the binary feature mask into birds-eye view
 4. Detection of the left and right lane lines and fitting to a second order polynomial  
     4.1. by a sliding window approach (if previously undetected or in lost status) or   
-    4.2. by using the information of recently detected lane lines   
+    4.2. by using the information of recently detected lane lines
 
 Both functions [``fit_lines_by_windows``][fit_lines_by_windows] and 
 [``fit_lines_by_recent_lines``][fit_lines_by_recent_lines] can be found in 
@@ -436,15 +441,15 @@ def fit_lines_by_recent_lines(warped_feature_binary,
     """
 ```
 
-The [``Line``][Line] class is used to gather the required information for each lane line. 
+The [``Line``][Line] class is used to collect the required information for each lane line. 
 It is updated by the active pixels determined by [``fit_lines_by_windows``][fit_lines_by_windows] 
-or [``fit_lines_by_recent_lines``][fit_lines_by_recent_lines] at 
-each new incoming video frame. Amongst others, the following steps are performed:
+or [``fit_lines_by_recent_lines``][fit_lines_by_recent_lines] on 
+each new incoming video frame. Among others, the following steps are performed:
 
 - Sanity check of new polynomial fit (coefficient deviations too high?)
 - Depending on the sanity check, setting to lost or detected status
-- Update the current radius of curvature
-- Update the current offset of the line from the vehicle location
+- Update of the current radius of curvature
+- Update of the current offset of the line from the vehicle location
 
 The complete [``Line``][Line] class code can be found in [``process.py``][process]. 
 
@@ -545,7 +550,7 @@ avg_vehicle_offset = 0.5 * abs(left_line.offset_from_vehicle + right_line.offset
 avg_curv_rad = 0.5 * (left_line.radius_of_curvature + right_line.radius_of_curvature)
 ```
 
-The actual computation of the individual lane line values are performed by the methods 
+The actual computation of the individual lane line values is done by the methods 
 [``Line.update_offset_from_vehicle``][update_offset] and 
 [``Line.update_radius_of_curvature_m``][update_radius]. 
 It is assumed that the vehicle location is at the bottom center of the image. The vehicle's
@@ -677,7 +682,7 @@ The approach presented above works well for the ``project_video.mp4`` and the ``
 Of course, this is also due to the fact that it was developed on basis of test images taken from these 
 two videos. There is certainly room for improvement, especially in cases where the lane lines are lost 
 over several frames.   
-Shorter periods could be bridged in this approach, by giving the Line classes a memory of 20 frames. 
+Shorter periods could be bridged in this approach by giving the Line classes a memory of 20 frames. 
 By averaging the lane line polynomials, extreme jumps in individual frames could be reduced. 
 Additionally, the limitation of possible deviations of the polynomial coefficients A and C, also serves 
 this purpose. If, due to a lack of information in individual frames, these parameters 

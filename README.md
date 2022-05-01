@@ -671,7 +671,7 @@ The processed [``project_video.mp4``][projvid] and [``challenge_video.mp4``][cha
 #### Processed challenge video
 ![][image14]
 
-# Discussion
+## Discussion
 The approach presented above works well for the ``project_video.mp4`` and the ``challenge_video.mp4``. 
 Of course, this is also due to the fact that it was developed on basis of test images taken from these 
 two videos. There is certainly room for improvement, especially in cases where the lane lines are lost 

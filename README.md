@@ -9,14 +9,15 @@ steps:
 1. One-time determination of the camera calibration matrix and its distortion coefficients.
 2. Use it to correct the distortion of each video frame.
 3. Create a binary feature mask to detect the lane lines.
-4. Transforme the binary image into birds-eye perspective.
+4. Transform the binary image into birds-eye perspective.
 5. Detect and fit the left and right lane lines to second order polynomials.
 6. Determine the average radius of curvature and the vehicle offset with respect to the 
    lane center.
 7. Visualize the lane boundaries and additional information on each video frame. 
 
 ## Camera calibration
-The required code for the camera calibration can be found in [``camera_calibration.py``][Calibration]. There is also a nice [OpenCV tutorial][CalTut] on this topic.
+The required code for the camera calibration can be found in [``camera_calibration.py``][Calibration]. 
+There is also a nice [OpenCV tutorial][CalTut] on this topic.
 
 Chessboard sample images were captured from different angles with the embedded camera and 
 are provided in the [``camera_cal``][Chessboard] folder. A 9x6 pattern is visible on most of 

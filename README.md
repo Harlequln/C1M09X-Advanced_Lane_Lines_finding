@@ -1,7 +1,7 @@
 This project is part of Udacity's [Self-Driving-Car Nanodegree][Course]. The project
 resources and build instructions can be found [here][Project].
 
-## Lane lines detection using computer vision
+## Computer vision based lane detection
 The main goal of this project is the development of a software pipeline to detect the lane 
 boundaries in the provided videos. The pipeline can be subdividided into the following 
 steps:
@@ -307,7 +307,7 @@ def feature_mask(rgb_image):
 ```
 ![alt text][image9]
 
-## Transformation into birds-eye perspective
+## Perspective transformation
 To perform the perspective transformation, four points are required for the mapping of 
 the source locations to the destination locations. In this approach, the points are defined 
 as ratios of image size. The source points additionally serve for the defintion of the 
